@@ -17,7 +17,7 @@ This repository provides a Python library designed for dynamic batching of large
 You can install the necessary libraries with the following command:
 
 ```bash
-pip install torch datasets
+pip install torch datasets transformers
 ```
 
 ## Installation
