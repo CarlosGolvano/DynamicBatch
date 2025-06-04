@@ -33,6 +33,7 @@ class DynamicBatchSampler(data.Sampler):
         """
         self.indices = indices
         self.input_ids = input_ids
+        self.input_lengths = [len(ids) for ids in input_ids]
         self.max_tokens_per_batch = max_tokens_per_batch
 
     def __iter__(self) -> Iterator[List[int]]:
@@ -46,21 +47,20 @@ class DynamicBatchSampler(data.Sampler):
         """
         j = 0
         max_input_len = 0
-        for i, idx in enumerate(self.indices):
-            input = self.input_ids[idx]
-            max_input_len = (
-                len(input) if len(input) > max_input_len else max_input_len
-            )
+        indices = self.indices
+        lengths = self.input_lengths
+        for i, idx in enumerate(indices):
+            length = lengths[idx]
+            if length > max_input_len:
+                max_input_len = length
 
             if (i + 1 - j) * max_input_len > self.max_tokens_per_batch:
-                # Return last batch
-                yield self.indices[j:i]
+                yield indices[j:i]
                 j = i
-                max_input_len = 0
+                max_input_len = length
 
-            if i == len(self.indices) - 1:
-                # Last batch
-                yield self.indices[j:]
+            if i == len(indices) - 1:
+                yield indices[j:]
 
     def __len__(
         self,

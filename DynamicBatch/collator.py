@@ -45,26 +45,14 @@ class DynamicCollator:
             dict: A dictionary with padded 'input_ids' and 'attention_mask', and
             placeholders for 'word_ids' and 'text'.
         """
-        if not self.pad_from_left:
-            max_length = len(data["input_ids"][-1])
-            data["input_ids"] = [
-                lst + [self.pad_token] * (max_length - len(lst))
-                for lst in data["input_ids"]
-            ]
-            data["attention_mask"] = [
-                lst + [0] * (max_length - len(lst))
-                for lst in data["attention_mask"]
-            ]
+        max_length = max(len(ids) for ids in data["input_ids"])
+        if self.pad_from_left:
+            pad = lambda seq, tok: [tok] * (max_length - len(seq)) + seq
         else:
-            max_length = len(data["input_ids"][-1])
-            data["input_ids"] = [
-                [self.pad_token] * (max_length - len(lst)) + lst
-                for lst in data["input_ids"]
-            ]
-            data["attention_mask"] = [
-                [0] * (max_length - len(lst)) + lst
-                for lst in data["attention_mask"]
-            ]
+            pad = lambda seq, tok: seq + [tok] * (max_length - len(seq))
+
+        data["input_ids"] = [pad(ids, self.pad_token) for ids in data["input_ids"]]
+        data["attention_mask"] = [pad(mask, 0) for mask in data["attention_mask"]]
 
         return data
 
